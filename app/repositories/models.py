@@ -1,14 +1,3 @@
-"""
-Modelos ORM — SQLAlchemy.
-
-Estos modelos representan las tablas en PostgreSQL.
-Son DIFERENTES a las entidades del dominio (app/domain/entities/).
-    - Las entidades del dominio son objetos puros de negocio (dataclasses).
-    - Estos modelos ORM son la representación en base de datos.
-
-Los repositorios se encargan de convertir entre unos y otros.
-"""
-
 from datetime import datetime
 from sqlalchemy import (
     Column,
@@ -26,9 +15,9 @@ from app.domain.enums import (
     Direction,
 )
 
-
+#Tabla: customers
 class CustomerModel(Base):
-    """Tabla: customers"""
+
     __tablename__ = "customers"
 
     id = Column(String, primary_key=True)
@@ -36,9 +25,8 @@ class CustomerModel(Base):
     email = Column(String, nullable=False, unique=True)
     status = Column(String, nullable=False, default="ACTIVE")
 
-
+#Tabla: accounts
 class AccountModel(Base):
-    """Tabla: accounts"""
     __tablename__ = "accounts"
 
     id = Column(String, primary_key=True)
@@ -51,9 +39,8 @@ class AccountModel(Base):
         default=AccountStatus.ACTIVE,
     )
 
-
+#Tabla: transactions
 class TransactionModel(Base):
-    """Tabla: transactions"""
     __tablename__ = "transactions"
 
     id = Column(String, primary_key=True)
@@ -67,9 +54,8 @@ class TransactionModel(Base):
     )
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-
+#Tabla: ledger_entries
 class LedgerEntryModel(Base):
-    """Tabla: ledger_entries"""
     __tablename__ = "ledger_entries"
 
     id = Column(String, primary_key=True)

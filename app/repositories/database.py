@@ -12,8 +12,8 @@ DATABASE_URL = os.getenv(
 # Engine: conexión principal a la base de datos.
 engine = create_engine(DATABASE_URL, echo=False)
 
-# SessionLocal: fábrica de sesiones. Cada request de la API
-# abrirá una sesión y la cerrará al terminar.
+# SessionLocal: fábrica de sesiones. 
+# Cada request de la API abrirá una sesión y la cerrará al terminar.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base: todas las clases ORM (modelos) heredan de esta clase.
