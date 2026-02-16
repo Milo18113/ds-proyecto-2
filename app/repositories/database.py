@@ -20,23 +20,14 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # SQLAlchemy la usa para saber qué tablas crear.
 Base = declarative_base()
 
-
+#Abre una sesión de BD, la entrega al endpoint
 def get_db():
-    """
-    Dependency para FastAPI.
-    Abre una sesión de BD, la entrega al endpoint,
-    y la cierra cuando termina (incluso si hay error).
-    """
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
-
+#Crea todas las tablas en la BD basándose en los modelos que heredan de Base
 def create_tables():
-    """
-    Crea todas las tablas en la BD basándose en los modelos
-    que heredan de Base. Útil para desarrollo/inicio.
-    """
     Base.metadata.create_all(bind=engine)
