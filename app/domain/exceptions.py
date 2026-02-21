@@ -21,3 +21,12 @@ class RiskRejectedError(DomainError):
 
 class InvalidTransactionAmountError(DomainError):
     pass
+
+
+
+class CustomerNotFound(DomainError):
+    pass
+
+
+class AccountNotFound(DomainError):
+    pass

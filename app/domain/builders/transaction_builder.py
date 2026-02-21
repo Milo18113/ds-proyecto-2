@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from app.domain.entities.transaction import Transaction
 from app.domain.enums import TransactionStatus, TransactionType
+from app.domain.exceptions import InvalidTransactionAmountError
 
 
 class TransactionBuilder:
@@ -34,6 +35,8 @@ class TransactionBuilder:
         return self
 
     def build(self):
+        if self._type is None or self._amount is None:
+            raise InvalidTransactionAmountError("El tipo o cantidad de la transacción no puede ser None")
         return Transaction(
             id=self._id,
             type=self._type,
