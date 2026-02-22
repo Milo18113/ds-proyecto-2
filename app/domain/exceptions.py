@@ -24,3 +24,10 @@ class InvalidTransactionAmountError(DomainError):
 
 class AccountNotFound(DomainError):
     pass
+
+class CustomerNotFound(DomainError):
+    pass
+
+class TransactionNotFound(DomainError):
+    pass
+
