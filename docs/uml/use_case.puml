@@ -1,0 +1,22 @@
+@startuml
+left to right direction
+actor Customer as C
+
+rectangle "Fintech Mini Bank" {
+  usecase "Create Customer" as UC1
+  usecase "Create Account" as UC2
+  usecase "Deposit" as UC3
+  usecase "Withdraw" as UC4
+  usecase "Transfer" as UC5
+  usecase "View Account" as UC6
+  usecase "List Transactions" as UC7
+}
+
+C --> UC1
+C --> UC2
+C --> UC3
+C --> UC4
+C --> UC5
+C --> UC6
+C --> UC7
+@enduml
