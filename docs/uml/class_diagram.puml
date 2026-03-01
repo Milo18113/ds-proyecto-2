@@ -1,0 +1,17 @@
+@startuml
+class Customer
+class Account
+class Transaction
+class LedgerEntry
+
+interface FeeStrategy
+interface RiskStrategy
+class BankingFacade
+
+Customer "1" -- "0..*" Account
+Account "1" -- "0..*" Transaction
+Transaction "1" -- "1..*" LedgerEntry
+
+BankingFacade ..> FeeStrategy
+BankingFacade ..> RiskStrategy
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+actor User
+participant "Streamlit UI" as UI
+participant "FastAPI" as API
+participant "BankingFacade" as Facade
+participant "RiskStrategy" as Risk
+participant "FeeStrategy" as Fee
+participant "Repos" as Repos
+
+User -> UI: Transfer(from,to,amount)
+UI -> API: POST /transactions/transfer
+API -> Facade: transfer(...)
+Facade -> Risk: validate(...)
+alt rejected
+  Risk --> Facade: reject
+  Facade --> API: error
+  API --> UI: error message
+else approved
+  Facade -> Fee: calc fee
+  Facade -> Repos: persist tx + ledger
+  Facade --> API: ok
+  API --> UI: success
+end
+@enduml
