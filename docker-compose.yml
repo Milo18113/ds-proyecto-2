@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16
+    container_name: fintech-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fintech
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: fintech-api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/fintech
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    container_name: fintech-ui
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
