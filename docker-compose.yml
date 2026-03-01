@@ -5,11 +5,18 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: fintech
+      POSTGRES_DB: fintech_db
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - fintech-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
@@ -17,11 +24,14 @@ services:
       dockerfile: Dockerfile.api
     container_name: fintech-api
     environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/fintech
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/fintech_db
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - fintech-network
 
   ui:
     build:
@@ -34,6 +44,12 @@ services:
       - "8501:8501"
     depends_on:
       - api
+    networks:
+      - fintech-network
+
+networks:
+  fintech-network:
+    driver: bridge
 
 volumes:
   pgdata:

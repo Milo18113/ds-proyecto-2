@@ -15,12 +15,7 @@ from app.repositories.models import (
 )
 
 
-
-# Customer
-
 class SqlCustomerRepository:
-    """Implementación ORM del CustomerRepository."""
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -53,7 +48,6 @@ class SqlCustomerRepository:
         return self._to_domain(model)
 
     def _to_domain(self, model: CustomerModel) -> Customer:
-        """Convierte un modelo ORM a una entidad de dominio."""
         return Customer(
             id=model.id,
             name=model.name,
@@ -62,12 +56,7 @@ class SqlCustomerRepository:
         )
 
 
-# Account
-
-
 class SqlAccountRepository:
-    """Implementación ORM del AccountRepository."""
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -99,15 +88,13 @@ class SqlAccountRepository:
         return [self._to_domain(m) for m in models]
 
     def update(self, account: Account) -> Account:
-        model = self.db.query(AccountModel).filter(
+        self.db.query(AccountModel).filter(
             AccountModel.id == account.id
-        ).first()
-        if model:
-            model.balance = account.balance
-            model.status = account.status
-            self.db.commit()
-            self.db.refresh(model)
-            return self._to_domain(model)
+        ).update({
+            AccountModel.balance: account.balance,
+            AccountModel.status: account.status,
+        })
+        self.db.commit()
         return account
 
     def _to_domain(self, model: AccountModel) -> Account:
@@ -115,16 +102,12 @@ class SqlAccountRepository:
             id=model.id,
             customer_id=model.customer_id,
             currency=model.currency,
-            balance=model.balance,
+            balance=float(model.balance),
             status=AccountStatus(model.status),
         )
 
 
-# Transaction
-
 class SqlTransactionRepository:
-    """Implementación ORM del TransactionRepository."""
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -151,7 +134,6 @@ class SqlTransactionRepository:
         return self._to_domain(model)
 
     def get_by_account_id(self, account_id: str) -> list[Transaction]:
-        """Busca transacciones de una cuenta a través del ledger."""
         ledger_entries = self.db.query(LedgerEntryModel).filter(
             LedgerEntryModel.account_id == account_id
         ).all()
@@ -165,12 +147,8 @@ class SqlTransactionRepository:
         ).order_by(TransactionModel.created_at.desc()).all()
         return [self._to_domain(m) for m in models]
 
-    def count_recent_by_account(
-        self, account_id: str, minutes: int
-    ) -> int:
-        """Cuenta transacciones aprobadas en los últimos N minutos."""
+    def count_recent_by_account(self, account_id: str, minutes: int) -> int:
         cutoff = datetime.utcnow() - timedelta(minutes=minutes)
-        # Encuentra transaction_ids de esta cuenta via ledger
         ledger_entries = self.db.query(LedgerEntryModel).filter(
             LedgerEntryModel.account_id == account_id
         ).all()
@@ -187,11 +165,9 @@ class SqlTransactionRepository:
         return count
 
     def sum_daily_by_account(self, account_id: str) -> float:
-        """Suma montos de transacciones aprobadas de hoy."""
         today_start = datetime.utcnow().replace(
             hour=0, minute=0, second=0, microsecond=0
         )
-        # Encuentra transaction_ids de esta cuenta via ledger
         ledger_entries = self.db.query(LedgerEntryModel).filter(
             LedgerEntryModel.account_id == account_id
         ).all()
@@ -211,19 +187,14 @@ class SqlTransactionRepository:
         return Transaction(
             id=model.id,
             type=model.type,
-            amount=model.amount,
+            amount=float(model.amount),
             currency=model.currency,
             status=model.status,
             created_at=model.created_at,
         )
 
 
-
-# Ledger
-
 class SqlLedgerRepository:
-    """Implementación ORM del LedgerRepository."""
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -246,9 +217,7 @@ class SqlLedgerRepository:
         ).all()
         return [self._to_domain(m) for m in models]
 
-    def get_by_transaction_id(
-        self, transaction_id: str
-    ) -> list[LedgerEntry]:
+    def get_by_transaction_id(self, transaction_id: str) -> list[LedgerEntry]:
         models = self.db.query(LedgerEntryModel).filter(
             LedgerEntryModel.transaction_id == transaction_id
         ).all()
@@ -260,5 +229,5 @@ class SqlLedgerRepository:
             account_id=model.account_id,
             transaction_id=model.transaction_id,
             direction=Direction(model.direction),
-            amount=model.amount,
+            amount=float(model.amount),
         )
