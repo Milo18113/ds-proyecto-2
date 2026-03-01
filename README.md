@@ -1,6 +1,6 @@
 # Fintech Mini Bank
 
-Mini banco fintech con arquitectura por capas:
+Mini banco fintech con arquitectura hexagonal:
 - **API**: FastAPI
 - **UI**: Streamlit
 - **DB**: PostgreSQL (Docker)
@@ -15,74 +15,103 @@ La aplicación permite crear clientes y cuentas, ejecutar transacciones (depósi
 
 ---
 
-## Cómo correr (Docker)
+## Cómo correr
 
 En la raíz del repositorio:
 
 ```bash
 docker compose up --build
+```
 
 Cuando levante:
-Swagger (API): http://localhost:8000/docs
-Streamlit (UI): http://localhost:8501
+- **Swagger (API):** http://localhost:8000/docs
+- **Streamlit (UI):** http://localhost:8501
 
 Para detener:
+
+```bash
 docker compose down
+```
 
-Cómo usar la UI (flujo recomendado)
+---
 
-Crear cliente (tab “Cliente”)
+## Cómo usar la UI (flujo recomendado)
 
-Crear cuenta con el customer_id generado (tab “Cuenta”)
+1. Crear cliente (tab "Cliente")
+2. Crear cuenta con el customer_id generado (tab "Cuenta")
+3. Depositar a la cuenta (tab "Depósito")
+4. Retirar o Transferir (tabs "Retiro" y "Transferencia")
+5. Consultar cuenta/saldo (tab "Saldo")
+6. Listar transacciones (tab "Transacciones")
 
-Depositar a la cuenta (tab “Depósito”)
+---
 
-Retirar o Transferir (tabs “Retiro” y “Transferencia”)
+## Endpoints principales (API)
 
-Consultar cuenta/saldo (tab “Saldo”)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | /health | Healthcheck |
+| POST | /customers | Crear cliente |
+| POST | /accounts | Crear cuenta |
+| GET | /accounts/{account_id} | Consultar cuenta/saldo |
+| POST | /transactions/deposit | Depósito |
+| POST | /transactions/withdraw | Retiro |
+| POST | /transactions/transfer | Transferencia |
+| GET | /accounts/{account_id}/transactions | Listar transacciones |
 
-Listar transacciones (tab “Transacciones”)
+La documentación completa se puede ver en Swagger: http://localhost:8000/docs
 
-Endpoints principales (API)
+---
 
-GET /health — healthcheck
+## Decisiones de diseño
 
-POST /customers — crear cliente
+### Patrones aplicados
 
-POST /accounts — crear cuenta
+- **Facade**: `BankingFacade` como único punto de entrada desde la API hacia el dominio. Los endpoints no llaman servicios/repos directamente.
+- **Strategy**: `FeeStrategy` (4 implementaciones: NoFee, Flat, Percent, Tiered) y `RiskStrategy` (3 implementaciones: MaxAmount, Velocity, DailyLimit) para reglas configurables.
+- **Factory Method**: `TransactionFactory` crea objetos Transaction según tipo y valida campos requeridos.
+- **Builder**: `TransactionBuilder` construye transacciones paso a paso con metadata.
 
-GET /accounts/{account_id} — consultar cuenta/saldo
+### Arquitectura hexagonal
 
-POST /transactions/deposit — depósito
+- `app/domain/` — Entidades, enums, excepciones, strategies, factories
+- `app/services/` — Casos de uso (orquestación de flujo)
+- `app/repositories/` — Interfaces (Protocol) + implementaciones ORM
+- `app/application/` — FastAPI routes, DTOs, Facade
+- `app/frontend/` — Streamlit (consume la API)
 
-POST /transactions/withdraw — retiro
+### Reglas de negocio
 
-POST /transactions/transfer — transferencia
+- **Fee**: Se aplica comisión del 1.5% (PercentFeeStrategy) a cada transacción
+- **Risk**: Se valida monto máximo ($10,000), velocidad (máx 10 tx en 10 min), y límite diario ($50,000)
+- **Estados**: Las cuentas FROZEN/CLOSED no pueden operar. Las transacciones se marcan APPROVED o REJECTED.
 
-GET /accounts/{account_id}/transactions — listar transacciones
+---
 
-Nota: La documentación completa y los esquemas se pueden ver en Swagger: http://localhost:8000/docs
+## Estructura del repositorio
 
-Decisiones de diseño
+```
+app/
+  domain/         — entidades, enums, excepciones, strategies, factories
+  services/       — casos de uso
+  repositories/   — interfaces + implementaciones ORM
+  application/    — routes, DTOs, facade
+  frontend/       — streamlit_app.py
+tests/            — tests de dominio, strategies y API
+docs/uml/         — diagramas UML (PlantUML)
+docker-compose.yml
+Dockerfile.api
+Dockerfile.ui
+```
 
-Facade: se plantea un único punto de entrada (BankingFacade) para orquestar casos de uso (crear cliente/cuenta y transacciones).
+---
 
-Strategy: uso de estrategias para cálculo de comisiones (FeeStrategy) y reglas de riesgo (RiskStrategy).
+## Tests
 
-Repositorios: separación entre lógica de negocio y persistencia (PostgreSQL/SQLAlchemy) mediante repositorios.
+```bash
+pytest tests/
+```
 
-Estructura del repositorio
-
-app/ — FastAPI + capa de aplicación
-
-app/application/ — rutas y DTOs
-
-app/frontend/ — Streamlit UI (streamlit_app.py)
-
-docs/ — documentación UML (PlantUML)
-
-docker-compose.yml — orquestación (db + api + ui)
-
-Dockerfile.api — contenedor de la API
-
-Dockerfile.ui — contenedor de la UI
+- 2 tests de dominio (insufficient funds, cuenta frozen)
+- 2 tests de strategies (fee calculation, risk rejection)
+- 2 tests de API (deposit y transfer happy path)
